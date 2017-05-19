@@ -72,8 +72,12 @@ class Database(object):
 	# Details			#
 	###########################
 
-	def insert_r2(self, sha1, offset, size, name):
-		insert_string = "insert into r2_data (sha1, offset, size, name) values ('%s', '%s', %d, '%s')" % (sha1, offset, size, name)
+	def insert_sample(self, sha1, name, size):
+		insert_string = "insert into samples (sha1, name, size) values ('%s', '%s', %d)" % (sha1, name, size)
+		self.insert(insert_string)
+	
+	def insert_r2(self, sha1, offset, size, name, epbytes):
+		insert_string = "insert into r2_data (sha1, offset, size, name, epbytes) values ('%s', '%s', %d, '%s', '%s')" % (sha1, offset, size, name, epbytes)
 		self.insert(insert_string)
 		
 	def insert_ida(self, sha1, offset, size, name):
@@ -85,13 +89,22 @@ class Database(object):
 	###########################
 
 	def create_scheme(self):
+	
+		create_string = """CREATE TABLE samples (
+							sha1 text PRIMARY KEY,
+							name text,
+							size integer
+						)"""
+		self.insert(create_string)
 
 		create_string = """CREATE TABLE r2_data (
 							sha1 text,
 							offset text,
 							size integer,
 							name text,
-							PRIMARY KEY (sha1, offset)
+							epbytes text,
+							PRIMARY KEY (sha1, offset),
+							FOREIGN KEY (sha1) references samples(sha1)
 						)"""
 		self.insert(create_string)
 
@@ -100,7 +113,8 @@ class Database(object):
 							offset text,
 							size integer,
 							name text,
-							PRIMARY KEY (sha1, offset)
+							PRIMARY KEY (sha1, offset),
+							FOREIGN KEY (sha1) references samples(sha1)
 						)"""
 		self.insert(create_string)
 
@@ -111,5 +125,7 @@ class Database(object):
 		drop_string = """drop table if exists r2_data"""
 		self.delete(drop_string)
 		drop_string = """drop table if exists ida_data"""
+		self.delete(drop_string)
+		drop_string = """drop table if exists samples"""
 		self.delete(drop_string)
 		print("LOG - All data flushed")
